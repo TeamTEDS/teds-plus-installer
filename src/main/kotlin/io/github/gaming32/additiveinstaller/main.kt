@@ -21,7 +21,7 @@ const val VERSION = "<<VERSION>>"
 val I18N = ResourceBundle.getBundle("i18n/lang", Locale.getDefault())!!
 
 fun main() {
-    logger.info("TEDS Modpacks Installer $VERSION")
+    logger.info("TEDS Plus Installer $VERSION")
 
     if (isDarkMode()) {
         if (operatingSystem == OperatingSystem.MACOS) {

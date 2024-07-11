@@ -8,7 +8,7 @@ plugins {
 }
 
 group = "io.github.teamteds"
-version = "1.1.1"
+version = "1.2.0"
 
 application {
     mainClass.set("io.github.teamteds.tedsmodpacksinstaller.MainKt")
