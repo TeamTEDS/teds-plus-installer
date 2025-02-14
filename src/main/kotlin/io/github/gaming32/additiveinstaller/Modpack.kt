@@ -22,8 +22,8 @@ class Modpack(val id: String) {
                 result
             }
 
-    val name = id
-    val windowTitle = I18N.getString("window.title", name.replace("-", " "))
+    val name = id.capitalize()
+    val windowTitle = I18N.getString("window.title", name)
     val image = ImageIO.read(javaClass.getResource("/${id}96.png"))!!
     val launcherIcon = javaClass.getResource("/${id}32.png")
         ?.readBytes()

@@ -37,8 +37,8 @@ fun main() {
         }
     }
 
-    val tedsPlus = Modpack("TEDS-Plus")
-    val tedsLite = Modpack("TEDS-Lite")
+    val tedsPlus = Modpack("teds-plus")
+    val tedsLite = Modpack("teds-lite")
     // val hoplitePlus = Modpack("additive")
     var selectedPack = tedsPlus
 
