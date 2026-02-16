@@ -67,10 +67,8 @@ fun main() {
                 selectedPack.versions[gameVersion]
                     ?.keys
                     ?.forEach(packVersion::addItem)
-                selectedPack.versions[gameVersion]
-                    ?.entries
-                    ?.first { it.value.values.any(PackVersion::isSupported) }
-                    ?.let { packVersion.selectedItem = it.key }
+                selectedPack.latestVersionForMc[gameVersion]
+                    ?.let { packVersion.selectedItem = it }
             }
         }
 
@@ -80,10 +78,10 @@ fun main() {
             val loaders = selectedPack.versions[gameVersion]
                 ?.get(selectedVersion) ?: return@addItemListener
             loaderSelector.removeAllItems()
-            for ((loader, version) in loaders) {
-                if (version.isSupported || includeUnsupportedMinecraft.isSelected) {
-                    loaderSelector.addItem(loader.name.lowercase().capitalize())
-                }
+            for ((loader, _) in loaders) {
+                loaderSelector.addItem(
+                    loader.name.lowercase().replaceFirstChar { it.titlecase() }
+                )
             }
         }
 
@@ -92,9 +90,7 @@ fun main() {
             minecraftVersion.removeAllItems()
             val all = includeUnsupportedMinecraft.isSelected
             val supported = selectedPack.supportedMcVersions
-            selectedPack.versions
-                .keys
-                .asSequence()
+            selectedPack.versions.keys
                 .filter { all || it in supported }
                 .forEach(minecraftVersion::addItem)
             if (mcVersion != null) {
@@ -103,6 +99,7 @@ fun main() {
         }
         setupMinecraftVersions()
 
+        includeUnsupportedMinecraft.toolTipText = I18N.getString("include.unsupported.minecraft.tooltip")
         includeUnsupportedMinecraft.addActionListener { setupMinecraftVersions() }
 
         val includeFeatures = JCheckBox(I18N.getString("include.non.performance.features")).apply {
