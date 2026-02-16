@@ -2,11 +2,13 @@ package io.github.teamteds.tedsmodpacksinstaller
 
 import com.google.gson.JsonObject
 import java.nio.file.Path
+import java.time.Instant
 
 class PackVersion(val modpack: Modpack, val data: JsonObject) {
     val packVersion: String
     val gameVersion: String
     val loader: Loader
+    val datePublished: Instant
 
     init {
         val versionNumber = data["version_number"].asString
@@ -27,12 +29,12 @@ class PackVersion(val modpack: Modpack, val data: JsonObject) {
                 "quilt"
             }
         }.uppercase().let(Loader::valueOf)
+        datePublished = Instant.parse(data["date_published"].asString)
     }
 
     val launcherFolderPath = "${modpack.id}/$packVersion-$gameVersion-$loader"
     val launcherVersionId = "${modpack.id}-$packVersion-$gameVersion-$loader"
     val launcherProfileId = "${modpack.id}-$gameVersion-$loader"
-    val isSupported = data["featured"].asBoolean
 
     fun install(destination: Path, progressHandler: ProgressHandler) =
         PackInstaller(this, destination, progressHandler)
