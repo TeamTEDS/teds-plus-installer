@@ -8,9 +8,7 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.github.z4kn4fein.semver.toVersion
-import java.io.IOException
 import java.net.URI
-import java.nio.file.FileAlreadyExistsException
 import java.nio.file.FileSystem
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -22,7 +20,6 @@ class PackInstaller(
     private val packVersion: PackVersion, private val destination: Path, private val progressHandler: ProgressHandler
 ) : AutoCloseable {
     companion object {
-        const val YOSBR_ID = "WwbubTsV"
         val DOT_MINECRAFT = Path(
             when (operatingSystem) {
                 OperatingSystem.WINDOWS -> "${System.getenv("APPDATA")}\\.minecraft"
@@ -142,11 +139,23 @@ class PackInstaller(
         progressHandler.prepareNewTaskSet(I18N.getString("downloading.mods"))
 
         val files = packIndex["files"].asJsonArray
+            .asSequence()
+            .map(JsonElement::getAsJsonObject)
+            .filterNot { file ->
+                val isClientUnsupported = file["env"]?.asJsonObject?.get("client")?.asString == "unsupported"
+                if (isClientUnsupported) {
+                    logger.info { "Skipping ${file["path"].asString} because client is unsupported" }
+                }
+                isClientUnsupported
+            }
+            .toList()
         modsDir.deleteRecursively()
+        (destination / "config/yosbr").deleteRecursively()
+        (destination / "config/modpack_defaults").deleteRecursively()
 
-        progressHandler.newTaskSet(files.size())
+        progressHandler.newTaskSet(files.size)
 
-        files.asSequence().map(JsonElement::getAsJsonObject).forEach { file ->
+        files.forEach { file ->
             val path = file["path"].asString
             progressHandler.newTask(I18N.getString("downloading.file", path))
             val (destRoot, dest) = if (path.startsWith("mods/")) {
@@ -158,12 +167,7 @@ class PackInstaller(
                 throw IllegalArgumentException("Path doesn't start with mods dir?")
             }
             dest.parent.createDirectories()
-            val downloadUrl = file["downloads"].asJsonArray.first().asString
-            if ("/$YOSBR_ID/" in downloadUrl && "yosbr" in file["path"].asString) {
-                logger.info { "Skipping yosbr" }
-                return@forEach
-            }
-            download(file, downloadUrl, dest)
+            download(file, file["downloads"].asJsonArray.first().asString, dest)
         }
 
         progressHandler.prepareNewTaskSet(I18N.getString("extracting.overrides"))
@@ -174,24 +178,11 @@ class PackInstaller(
         progressHandler.newTaskSet(overrides.size)
 
         for (override in overrides) {
-            var relative = override.relativeTo(overridesDir).toString()
-            var overwrite = true
-            if (relative.startsWith("config/yosbr/")) {
-                relative = relative.substring(13)
-                overwrite = false
-                logger.info { "Override $relative is in yosbr" }
-            }
+            val relative = override.relativeTo(overridesDir).toString()
             progressHandler.newTask(I18N.getString("extracting.override", relative))
             val dest = destination / relative
-            try {
-                dest.parent.createDirectories()
-            } catch (_: IOException) {
-            }
-            try {
-                override.copyTo(dest, overwrite)
-            } catch (_: FileAlreadyExistsException) {
-                logger.info { "Skipping override $relative because it was in yosbr and the file already exists" }
-            }
+            dest.parent.createDirectories()
+            override.copyTo(dest, true)
         }
     }
 
