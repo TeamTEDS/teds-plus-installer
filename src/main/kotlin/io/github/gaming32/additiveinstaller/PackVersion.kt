@@ -11,31 +11,10 @@ class PackVersion(val modpack: Modpack, val data: JsonObject) {
     val datePublished: Instant
 
     init {
-<<<<<<< HEAD
-        val versionNumber = data["version_number"].asString
-        loader = if ('-' in versionNumber && '+' !in versionNumber) {
-            packVersion = versionNumber.substringBefore('-')
-            gameVersion = versionNumber.substringAfterLast('-')
-            if (versionNumber.count { it == '-' } > 1) {
-                versionNumber.substringAfter('-').substringBeforeLast('-')
-            } else {
-                "FABRIC"
-            }
-        } else {
-            packVersion = versionNumber.substringBefore('+')
-            gameVersion = versionNumber.substringAfter('+').substringBeforeLast('.')
-            if (versionNumber.substringAfterLast('.') == "fabric") {
-                "fabric"
-            } else {
-                "quilt"
-            }
-        }.uppercase().let(Loader::valueOf)
-=======
         val (packVer, gameVer, ldr) = parseVersion(data["version_number"].asString)
         packVersion = packVer
         gameVersion = gameVer
         loader = ldr
->>>>>>> upstream/main
         datePublished = Instant.parse(data["date_published"].asString)
     }
 
